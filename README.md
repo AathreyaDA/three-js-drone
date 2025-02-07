@@ -1,9 +1,7 @@
-# Getting Started with Create React App
+# Important
+`/public/g4k.hdr` couldn't be uploaded here due to size limitations. So open the text file of the same name and download it from that link. Replace the original `/public/g4k.hdr` with the one you download.
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
-
-## Available Scripts
-
+# React development and deployment: 
 In the project directory, you can run:
 
 ### `npm start`
