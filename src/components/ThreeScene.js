@@ -95,7 +95,7 @@ const ThreeScene = () => {
     // groundMesh.color = "blue";
 
     scene.current.add(groundMesh);
-    scene.current.add(box1.current);
+    //scene.current.add(box1.current);
     // groundBody.quaternion.setFromEuler(-Math.PI/2, 0, 0);
     world.current.addBody(groundBody);
 
