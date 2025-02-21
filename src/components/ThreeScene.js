@@ -60,7 +60,7 @@ const ThreeScene = () => {
 
     //HDRI background
     const rgbeLoader = new RGBELoader();
-    rgbeLoader.load("/g4k.hdr", 
+    rgbeLoader.load("https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/4k/goegap_road_4k.hdr", 
       (texture) => {
         texture.mapping = THREE.EquirectangularReflectionMapping;
         scene.current.environment = texture;
