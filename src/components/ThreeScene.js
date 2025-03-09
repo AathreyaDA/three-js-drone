@@ -155,7 +155,7 @@ const ThreeScene = () => {
 
 
     for(let i = 0; i < 4; i++){
-      arrowLoaders[i].load('/droneModel/source/Arrow.glb', 
+      arrowLoaders[i].load('/Arrow.glb', 
         (arrowGltf) => {
           const model = arrowGltf.scene;
           const arrowScale = meshScale * relativeArrowScale ;
