@@ -18,8 +18,11 @@ const ThreeScene = () => {
   const meshScale = 0.02; //For college drone (drone.glb)
   // const meshScale = 0.25; //For blender drone (5drone.glb)
   // const meshScale = 5; //For animated drone (2drone.glb)
+  const relativeArrowScale = 10;
 
   const world = useRef(new CANNON.World({gravity: new CANNON.Vec3(0, -9.8 * scale, 0)}));
+  // const landscapeMesh = useRef(null);
+
   const droneMesh = useRef(null);
   const droneBody = useRef(null);
   const droneMass = 1;
@@ -28,7 +31,7 @@ const ThreeScene = () => {
   const targetRpm = useRef(0); // The RPM we want to reach
   const rpmIncreaseSpeed = 10; // RPM increase per second
 
-  const box1 = useRef(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({color:"red"})));
+  const arrows = useRef([null, null, null, null]);
   // const movement = () => {
 
   // }
@@ -60,7 +63,7 @@ const ThreeScene = () => {
 
     //HDRI background
     const rgbeLoader = new RGBELoader();
-    rgbeLoader.load("https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/4k/goegap_road_4k.hdr", 
+    rgbeLoader.load("/g4k.hdr", 
       (texture) => {
         texture.mapping = THREE.EquirectangularReflectionMapping;
         scene.current.environment = texture;
@@ -95,12 +98,17 @@ const ThreeScene = () => {
     // groundMesh.color = "blue";
 
     scene.current.add(groundMesh);
-    //scene.current.add(box1.current);
+    scene.current.add(arrows.current[0]);
     // groundBody.quaternion.setFromEuler(-Math.PI/2, 0, 0);
     world.current.addBody(groundBody);
 
     //drone model loader
     const droneLoader = new GLTFLoader();
+    // const landscapeLoader = new GLTFLoader();
+    const arrowLoaders = Array.from({ length: 4 }, () => new GLTFLoader());
+
+
+
     droneLoader.load(
       '/droneModel/source/9drone.glb', // Make sure this file is inside /public folder
       (gltf) => {
@@ -110,18 +118,6 @@ const ThreeScene = () => {
         model.scale.set(meshScale, meshScale, meshScale); // Adjust scale if necessary
         droneMesh.current = model;
         scene.current.add(droneMesh.current);
-
-        // model.traverse((child) => {
-        //   if (child.isMesh) {
-        //     model.remove(child);
-        //   }
-        // });
-
-        
-        // if(gltf.animations.length > 0 ){
-        //   mixer.current = new THREE.AnimationMixer(model);
-        //   mixer.current.clipAction(gltf.animations[10]).play()
-        // }
         
         if (gltf.animations.length > 0) {
           mixer.current = new THREE.AnimationMixer(model);
@@ -132,8 +128,7 @@ const ThreeScene = () => {
             // action.timeScale = rpm.current * 2 / 3
             action.play();
           });
-        }
-        
+        }        
 
         droneBody.current = new CANNON.Body({
           mass: droneMass, // Give it some weight
@@ -157,6 +152,20 @@ const ThreeScene = () => {
         console.error("Error loading GLB:", error);
       }
     );
+
+
+    for(let i = 0; i < 4; i++){
+      arrowLoaders[i].load('/droneModel/source/Arrow.glb', 
+        (arrowGltf) => {
+          const model = arrowGltf.scene;
+          const arrowScale = meshScale * relativeArrowScale ;
+          model.scale.set(arrowScale, arrowScale, arrowScale);
+
+          arrows.current[i] = model;
+          scene.current.add(arrows.current[i]);
+        }
+      )
+    }
 
     const keyState = {};
 
@@ -215,7 +224,7 @@ const ThreeScene = () => {
     const clock = new THREE.Clock();
     const meshBodyDifference = new THREE.Vector3(0, -1.1, 0);
 
-    const rotorBodyDistance = 1;
+    const rotorBodyDistance = 0.78;
     const animate = () => {
       requestAnimationFrame(animate);
       const delta = clock.getDelta();
@@ -241,17 +250,26 @@ const ThreeScene = () => {
           droneMesh.current.position.copy(droneBody.current.position);
         }
         
-        const rotorOffset = new THREE.Vector3(rotorBodyDistance, 0, rotorBodyDistance);
-        rotorOffset.applyQuaternion(droneBody.current.quaternion); // Rotate the offset with the drone's rotation
+        for(let i = 0; i<4; i++){
+          const xSign = ((i>>1) & 1) * 2 - 1;
+          const zSign = (i & 1) * 2 - 1;
+          const rotorOffset = new THREE.Vector3( xSign * rotorBodyDistance, 0.7, zSign * rotorBodyDistance);
+          rotorOffset.applyQuaternion(droneMesh.current.quaternion); 
 
-        box1.current.position.copy(droneBody.current.position).add(rotorOffset);
-        box1.current.quaternion.copy(droneBody.current.quaternion);
+          arrows.current[i].position.copy(droneMesh.current.position).add(rotorOffset);
+          arrows.current[i].quaternion.copy(droneMesh.current.quaternion);
+
+          const speedScaledArrowScale = meshScale * relativeArrowScale * rpm.current/maxRPM;
+          arrows.current[i].scale.set(speedScaledArrowScale, speedScaledArrowScale, speedScaledArrowScale);
+        }
+        
 
         droneMesh.current.quaternion.copy(droneBody.current.quaternion);
       }
 
       if(mixer.current){
         mixer.current.timeScale = rpm.current * 2 / 3;
+        console.log(rpm.current);
         mixer.current.update(delta);
       }
       renderer.current.render(scene.current, camera.current); // Render the scene
