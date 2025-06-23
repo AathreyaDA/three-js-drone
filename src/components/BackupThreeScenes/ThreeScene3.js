@@ -2,14 +2,11 @@ import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { useEffect, useRef, useState } from 'react';
 import { OrbitControls, RGBELoader } from 'three/examples/jsm/Addons.js';
-import { rotationFactor, airDensity, kValue, rotorDiameter, scale, maxVelocity, stableMaxRPM, upMaxRPM, downMaxRPM, rpmIncreaseSpeed, maxRPMReduction, RPMReductionRate, resetReduction } from './services/drone/UsedConstants';
-import * as RPMCalculations from './services/drone/RPMCalculations'
-import * as Models from './services/drone/Models';
-import { calculateYawCameraOffset } from './services/drone/VectorCalculations';
-import updateMovement from './services/drone/updateMovement';
-import { levelLogic, createLevels } from './services/drone/LevelServices';
-import Weather from './services/environment/Weather';
-
+import { rotationFactor, airDensity, kValue, rotorDiameter, scale, maxVelocity, stableMaxRPM, upMaxRPM, downMaxRPM, rpmIncreaseSpeed, maxRPMReduction, RPMReductionRate, resetReduction } from './services/UsedConstants';
+import * as RPMCalculations from './services/RPMCalculations'
+import * as Models from './services/Models';
+import { calculateYawCameraOffset } from './services/VectorCalculations';
+import updateMovement from './services/updateMovement';
 const ThreeScene = ({ markObjectiveComplete, levelNumber, loading, setLoading }) => {
   const mountRef = useRef(null);  // The container for the Three.js scene
   const canvasRef = useRef(null); // A separate ref for the canvas itself
@@ -18,7 +15,7 @@ const ThreeScene = ({ markObjectiveComplete, levelNumber, loading, setLoading })
   const renderer = useRef(null);
   const mixer = useRef(null);
   const initialized = useRef(false);
-  const rotorsOn = useRef(false); //Flag to indicate if the rotors are on or off
+  const rotorsOn = useRef(false);
 
   const ringModel = useRef(null);
   // Level 4 new refs
@@ -31,7 +28,7 @@ const ThreeScene = ({ markObjectiveComplete, levelNumber, loading, setLoading })
     isCurrentlyStable: true
   });
 
-  const delta = useRef(0) //Time between frames
+  const delta = useRef(0)
 
   // const [loading, setLoading] = useState(true);
   // Track objectives completed
@@ -49,57 +46,65 @@ const ThreeScene = ({ markObjectiveComplete, levelNumber, loading, setLoading })
     weather_checkpoint_4: false
   });
 
-  const levelState = useRef(1); //Tack objectives within levels
+  const levelState = useRef(1);
   
-  const world = useRef(new CANNON.World({gravity: new CANNON.Vec3(0, -9.8 * scale, 0)})); //CANNON JS physics world
+  const world = useRef(new CANNON.World({gravity: new CANNON.Vec3(0, -9.8 * scale, 0)}));
   const landscapeMesh = useRef(null);
+
   const droneMesh = useRef(null);
-  const droneBody = useRef(null); //Physics body of the drone
-  const rpm = useRef(0); //Uniform RPM level across rotors
-  const checkpoints = useRef([]); //Level checkpoints
-  const startTime = useRef(Date.now()); //Start time for levels
+  const droneBody = useRef(null);
+  const rpm = useRef(0);
+  const checkpoints = useRef([]);
+  const startTime = useRef(Date.now());
   const perfectRunRef = useRef(true); // Track if the user has made any mistakes
 
-
-  let maxRPM = 2000; //Max RPM of rotors at a moment. Is changed when ascending, descending, etc..,
+  let maxRPM = 2000;
 
   const targetRpm = useRef(0); // The RPM we want to reach
 
-  // const resetReduction = maxRPMReduction;
-
-  //Variables used to smoothly transition RMPs while moving
+  const resetReduction = maxRPMReduction;
   const xMovementRPMReduction = useRef(maxRPMReduction);
   const yMovementRPMReduction = useRef(4);
   const zMovementRPMReduction = useRef(maxRPMReduction);
   // const torqueStrength = 0.1; 
 
   const resetCorrectionFlag = useRef(false);
-  // let poweringOn = true; 
-  
-  //Individual rotor RPMs
+  let poweringOn = true;
+
   let rotorRPMs = [
     [rpm.current, rpm.current],
     [rpm.current, rpm.current] 
   ];
 
-  //Message passing tool between imported resetRPMs method and global state variables
-  const handleResetRPMs = (rotorRPMs_) => {
-    rotorRPMs = rotorRPMs_
-  }
-  //Local re-use of the name to simplify calling logic, as the arguments are static.
+  // const resetFlag = useRef(false);
+
   const resetRPMs = () => {
-    RPMCalculations.resetRPMs(handleResetRPMs, resetCorrectionFlag.current, xMovementRPMReduction, yMovementRPMReduction, zMovementRPMReduction, rpm.current);
+    xMovementRPMReduction.current = Math.min(xMovementRPMReduction.current + RPMReductionRate, maxRPMReduction);
+    yMovementRPMReduction.current = Math.min(yMovementRPMReduction.current + RPMReductionRate, 4);
+    zMovementRPMReduction.current = Math.min(zMovementRPMReduction.current + RPMReductionRate, maxRPMReduction);
+    // if(rpm.current == stableMaxRPM){
+    //   poweringOn = false;
+    // }
+    if(!resetCorrectionFlag.current){
+      rotorRPMs = [
+        [rpm.current, rpm.current],
+        [rpm.current, rpm.current]
+      ]}
+    else if(true){
+      const lerpRate = 0.2
+      rotorRPMs = [
+        [THREE.MathUtils.lerp(rotorRPMs[0][0], rpm.current, lerpRate), THREE.MathUtils.lerp(rotorRPMs[0][1], rpm.current, lerpRate)],
+        [THREE.MathUtils.lerp(rotorRPMs[1][0], rpm.current, lerpRate), THREE.MathUtils.lerp(rotorRPMs[1][1], rpm.current, lerpRate)]
+      ]
+      
+    }
+    
   }
 
   useEffect(() => {
     if(initialized.current) 
       return;
 
-    const lat = 12.9352;
-    const lon = 77.5351;
-    const weather = new Weather(lat, lon);
-
-    console.log("WD:", weather.data);
     // Simple initialization without complex resetting
     console.log(`Initializing level ${levelNumber}`);
     initialized.current = true;
@@ -159,13 +164,13 @@ const ThreeScene = ({ markObjectiveComplete, levelNumber, loading, setLoading })
       }
     );
 
-    //Orbit controls for camera, disabled now due to locking in with the drone. Could be unlocked with a button toggle in the future
+    //Orbit controls for camera
     const controls = new OrbitControls(camera.current, renderer.current.domElement);
     controls.enableDamping = true; // Smooth camera movement
     controls.dampingFactor = 0.05;
     controls.screenSpacePanning = false;
 
-    const groundSize = new CANNON.Vec3(8, 1.6, 8); //Dimensions of the ground platform
+    const groundSize = new CANNON.Vec3(8, 1.6, 8);
     //create ground
     const groundBody1 = new CANNON.Body({
       mass: 0, // Static object (no movement)
@@ -177,32 +182,178 @@ const ThreeScene = ({ markObjectiveComplete, levelNumber, loading, setLoading })
     const groundGeometry = new THREE.BoxGeometry(8, 1, 8);
     const groundMaterial = new THREE.MeshStandardMaterial({color:'green'});
     const groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
-    groundMesh.position.copy(groundBody1.position); //Sync the positions of ground mesh and physics body
+    groundMesh.position.copy(groundBody1.position);
+    // groundMesh.color = "blue";
+
     scene.current.add(groundMesh);
     world.current.addBody(groundBody1);
 
-    //Create level specific objects
-    createLevels({
-      levelNumber: levelNumber,
-      scene: scene.current,
-      checkpoints: checkpoints.current
-    });
-    
-    const handleLevelLogic = () => {
-      const levelLogicProps = {
-        droneBody: droneBody.current,
-        objectivesCompleted: objectivesCompleted.current,
-        markObjectiveComplete: markObjectiveComplete,
-        levelState: levelState,
-        levelNumber: levelNumber,
-        startTime: startTime,
-        perfectRunRef: perfectRunRef
-      };
+    //drone model loader
 
-      levelLogic(levelLogicProps);
+    // Create checkpoints for level 3
+    if (levelNumber === 3) {
+      for (let i = 0; i < 3; i++) {
+        const checkpointGeometry = new THREE.RingGeometry(5, 6, 32);
+        const checkpointMaterial = new THREE.MeshBasicMaterial({
+          color: 0x00ff00,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: 0.6
+        });
+        const checkpoint = new THREE.Mesh(checkpointGeometry, checkpointMaterial);
+        
+        checkpoint.position.set(
+          0,
+          12,           // Height
+          -(i + 1) * 5  // Z position (10, 20, 30)
+        );
+        
+        scene.current.add(checkpoint);
+        checkpoints.current.push(checkpoint);
+      }
     }
     
-    //Load landscape and drone meshes, add a physics body to the drone, create and run an animation mixer.
+    // Create checkpoints and wind zones for level 4
+    // Create checkpoints for level 4
+    if (levelNumber === 4) {
+      console.log("Creating Level 4 checkpoints");
+      
+      // Create 3 simple checkpoints
+      for (let i = 0; i < 3; i++) {
+        // Use TorusGeometry for rings
+        // const checkpointGeometry = new THREE.TorusGeometry(5, 0.5, 16, 32);
+        const checkpointGeometry = new THREE.SphereGeometry(5);
+        const checkpointMaterial = new THREE.MeshBasicMaterial({
+          color: 0xff00ff, // Bright magenta
+          wireframe: false
+        });
+        
+        const checkpoint = new THREE.Mesh(checkpointGeometry, checkpointMaterial);
+        
+        // Position checkpoints at different locations
+        switch(i) {
+          case 0:
+            checkpoint.position.set(0, 10, -15);
+            break;
+          case 1:
+            checkpoint.position.set(-10, 15, -35);
+            break;
+          case 2:
+            checkpoint.position.set(10, 15, -55);
+            break;
+        }
+        
+        // Rotate to stand upright
+        checkpoint.rotation.x = Math.PI / 2;
+        
+        scene.current.add(checkpoint);
+        checkpoints.current.push(checkpoint);
+        console.log(`Created Level 4 checkpoint ${i+1} at position:`, checkpoint.position);
+      }
+      
+      console.log(`Level 4 checkpoints created: ${checkpoints.current.length}`);
+    }
+
+    
+    const handleLevel = () => {
+
+
+      if (!droneBody.current) return;
+      
+      // Check for takeoff objective (when drone reaches certain height)
+      if (droneBody.current.position.y >= 10 && !objectivesCompleted.current.takeoff) {
+        objectivesCompleted.current.takeoff = true;
+        markObjectiveComplete("takeoff");
+
+        levelState.current = 2;
+      }
+      
+      // Check for landing objective (when drone comes back down to near ground level)
+      if (droneBody.current.position.y <= 2 && 
+          objectivesCompleted.current.takeoff && 
+          !objectivesCompleted.current.landing &&
+          levelState.current === 2 
+        ) {
+        objectivesCompleted.current.landing = true;
+        markObjectiveComplete("landing");
+      }
+      
+      // Check if level is complete based on required objectives for each level
+      switch (levelNumber) {
+        case 1:
+          // Level 1 just requires takeoff
+          if (objectivesCompleted.current.takeoff && 
+              objectivesCompleted.current.rotors_on) {
+            // Check for quick learner achievement
+            const timeTaken = (Date.now() - startTime.current) / 1000;
+            if (timeTaken < 30) {
+              markObjectiveComplete("quick_learner");
+            }
+          }
+          // objectivesCompleted.takeoff.current = false;
+          levelState.current = 1;
+          break;
+          
+        case 2:
+          // Level 2 requires takeoff, landing, turning rotors on and off
+          if (objectivesCompleted.current.takeoff && 
+              objectivesCompleted.current.landing && 
+              objectivesCompleted.current.rotors_on &&
+              objectivesCompleted.current.rotors_off) {
+            // Check for efficiency expert achievement
+            const timeTaken = (Date.now() - startTime.current) / 1000;
+            if (timeTaken < 60) {
+              markObjectiveComplete("efficiency_expert");
+            }
+          }
+          break;
+          
+        case 3:
+          // Level 3 requires all checkpoints, takeoff, landing, and rotors handling
+          if (objectivesCompleted.current.takeoff && 
+              // objectivesCompleted.current.landing && 
+              objectivesCompleted.current.rotors_on &&
+              // objectivesCompleted.current.rotors_off &&
+              objectivesCompleted.current.checkpoint_1 &&
+              objectivesCompleted.current.checkpoint_2 &&
+              objectivesCompleted.current.checkpoint_3) {
+            // Check for speed demon achievement
+            const timeTaken = (Date.now() - startTime.current) / 1000;
+            if (timeTaken < 60) {
+              markObjectiveComplete("speed_demon");
+            }
+            
+            // Check for perfect run achievement
+            if (perfectRunRef.current) {
+              markObjectiveComplete("perfect_run");
+            }
+          }
+          break;
+          
+        case 4:
+          // Level 4 requires all weather checkpoints, takeoff, and rotors on
+          if (objectivesCompleted.current.takeoff && 
+              objectivesCompleted.current.rotors_on &&
+              objectivesCompleted.current.weather_checkpoint_1 &&
+              objectivesCompleted.current.weather_checkpoint_2 &&
+              objectivesCompleted.current.weather_checkpoint_3) {
+            
+            // We only need three checkpoints for Level 4
+            // Check for storm navigator achievement
+            const timeTaken = (Date.now() - startTime.current) / 1000;
+            if (timeTaken < 90) {
+              markObjectiveComplete("storm_navigator");
+            }
+            
+            // Auto-award wind master since we removed wind effects
+            markObjectiveComplete("wind_master");
+          }
+          break;
+      }
+    }
+
+
+    
     const handleLoadModels = (landscapeMesh_, droneMesh_, droneBody_, mixer_) => {
         landscapeMesh.current = landscapeMesh_;
         if(!landscapeMesh.current){
@@ -222,16 +373,18 @@ const ThreeScene = ({ markObjectiveComplete, levelNumber, loading, setLoading })
 
     }
 
-    Models.load(handleLoadModels, setLoading);
+    const loadModels = () => {
+      Models.load(handleLoadModels, setLoading);
+    }
+
+    loadModels();
 
     const keyState = {};
 
     const handleKeyDown = (event) => {
-      //Debug code
       if(event.code === "KeyL"){
         console.log(droneBody.current.position);
       }
-      //Toggle rotors
       if(event.code === "KeyF"){
         console.log(droneBody.current.position.y);
         rotorsOn.current = !rotorsOn.current;
@@ -251,6 +404,9 @@ const ThreeScene = ({ markObjectiveComplete, levelNumber, loading, setLoading })
           markObjectiveComplete("rotors_off");
         }
         
+        if(!rotorsOn){
+          poweringOn = true;
+        }
       }
       
       // If the player turns upside down or crashes, mark the perfect run as failed
@@ -281,7 +437,12 @@ const ThreeScene = ({ markObjectiveComplete, levelNumber, loading, setLoading })
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
 
-    // const force = 0.25;
+    const force = 0.25;
+
+    // const updateMovement = () => {
+      
+    // }
+
     const updateCamera = () => {
       if (droneBody.current && camera.current) {
         const offset = calculateYawCameraOffset(new THREE.Vector3(0, 2, 5), droneBody.current); // Adjust this offset as needed
@@ -298,36 +459,39 @@ const ThreeScene = ({ markObjectiveComplete, levelNumber, loading, setLoading })
     const clock = new THREE.Clock();
     const meshBodyDifference = new THREE.Vector3(0, -1.1, 0);
 
+    
     const animate = () => {
+      
       requestAnimationFrame(animate);
+      
       delta.current = clock.getDelta();
 
       if(droneBody.current){
-        const updateProps = {
-          droneBody: droneBody.current,
-          levelNumber: levelNumber,
-          checkpoints: checkpoints.current,
-          droneMesh: droneMesh.current,
-          objectivesCompleted: objectivesCompleted.current,
-          markObjectiveComplete: markObjectiveComplete,
-          keyState: keyState,
-          handleLevelLogic: handleLevelLogic,
-          rpm: rpm.current,
-          rotorRPMs: rotorRPMs,
-          delta: delta.current,
-          rotorsOn: rotorsOn.current,
-          xMovementRPMReduction: xMovementRPMReduction,
-          yMovementRPMReduction: yMovementRPMReduction,
-          zMovementRPMReduction: zMovementRPMReduction,
-          resetCorrectionFlag: resetCorrectionFlag,
-          maxRPM: maxRPM,
-          resetRPMs: resetRPMs,
-          targetRpm: targetRpm
-        }
-      
-        updateMovement(updateProps);
+      const props = {
+        droneBody: droneBody.current,
+        levelNumber: levelNumber,
+        checkpoints: checkpoints.current,
+        droneMesh: droneMesh.current,
+        objectivesCompleted: objectivesCompleted.current,
+        markObjectiveComplete: markObjectiveComplete,
+        keyState: keyState,
+        handleLevel: handleLevel,
+        rpm: rpm.current,
+        rotorRPMs: rotorRPMs,
+        delta: delta.current,
+        rotorsOn: rotorsOn.current,
+        xMovementRPMReduction: xMovementRPMReduction,
+        yMovementRPMReduction: yMovementRPMReduction,
+        zMovementRPMReduction: zMovementRPMReduction,
+        resetCorrectionFlag: resetCorrectionFlag,
+        maxRPM: maxRPM,
+        resetRPMs: resetRPMs,
+        targetRpm: targetRpm
+      }
+    
+      updateMovement(props);
     }
-      //Change rpm slowly to target RPM.
+      
       if (rpm.current !== targetRpm.current) {
         const deltaRpm = rpmIncreaseSpeed * delta.current; // Change per frame
         if (rpm.current < targetRpm.current) {
@@ -338,8 +502,8 @@ const ThreeScene = ({ markObjectiveComplete, levelNumber, loading, setLoading })
       }
 
       world.current.step(1/60);
+      
       if(droneMesh.current && droneBody.current){
-        //Continuously update camera mesh's position to match its body
         if(rotorsOn){
           droneMesh.current.position.copy(droneBody.current.position).add(meshBodyDifference);
         }
@@ -351,7 +515,6 @@ const ThreeScene = ({ markObjectiveComplete, levelNumber, loading, setLoading })
         droneMesh.current.quaternion.copy(droneBody.current.quaternion);
       }
 
-      //Rotor blade animation mixer
       if(mixer.current){
         mixer.current.timeScale = rpm.current * 2 / 3;
         mixer.current.update(delta.current);
@@ -378,4 +541,6 @@ const ThreeScene = ({ markObjectiveComplete, levelNumber, loading, setLoading })
       <canvas ref={canvasRef} style={{ position: 'absolute', display: 'block', width: '100%', height: '100%' }}></canvas>
     </div>
   );}
+
+  
   export default ThreeScene;

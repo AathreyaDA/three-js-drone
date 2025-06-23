@@ -1,0 +1,565 @@
+/* DroneSimulator.css */
+/* Add this file to your project and import it in your main component */
+
+/* HUD Styles */
+#drone-hud {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: white;
+    font-family: 'Arial', sans-serif;
+    font-size: 14px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 5px;
+    z-index: 1000;
+    user-select: none;
+    width: 220px;
+    border: 1px solid rgba(0, 200, 255, 0.5);
+    box-shadow: 0 0 10px rgba(0, 200, 255, 0.3);
+  }
+  
+  #drone-hud .section-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #00ccff;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
+  
+  /* Battery indicator */
+  .battery-container {
+    margin-bottom: 10px;
+  }
+  
+  .battery-outer {
+    width: 100%;
+    height: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 6px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.3);
+  }
+  
+  .battery-inner {
+    height: 100%;
+    background: linear-gradient(to right, #4CAF50, #8BC34A);
+    transition: width 0.3s, background-color 0.3s;
+    border-radius: 5px;
+  }
+  
+  .battery-inner.warning {
+    background: linear-gradient(to right, #FFC107, #FF9800);
+  }
+  
+  .battery-inner.critical {
+    background: linear-gradient(to right, #FF5722, #F44336);
+    animation: pulse 1s infinite;
+  }
+  
+  /* Damage indicator */
+  .damage-container {
+    margin-bottom: 10px;
+  }
+  
+  .damage-outer {
+    width: 100%;
+    height: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 6px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.3);
+  }
+  
+  .damage-inner {
+    height: 100%;
+    background: linear-gradient(to right, #F44336, #D32F2F);
+    transition: width 0.3s;
+    border-radius: 5px;
+  }
+  
+  /* Mission status */
+  .mission-status {
+    margin-top: 15px;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 4px;
+    border-left: 3px solid #00ccff;
+  }
+  
+  .mission-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #00ccff;
+  }
+  
+  .mission-progress-container {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 5px;
+  }
+  
+  .mission-progress-bar {
+    height: 100%;
+    background: linear-gradient(to right, #00ccff, #00ffcc);
+    transition: width 0.3s;
+    border-radius: 4px;
+  }
+  
+  /* Stats display */
+  .stat-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+  }
+  
+  .stat-label {
+    color: rgba(255, 255, 255, 0.7);
+  }
+  
+  .stat-value {
+    font-weight: bold;
+  }
+  
+  /* Controls reminder */
+  .controls-reminder {
+    margin-top: 15px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  /* Notification */
+  #notification {
+    position: absolute;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 20px;
+    border-radius: 5px;
+    color: white;
+    font-family: 'Arial', sans-serif;
+    font-size: 16px;
+    font-weight: bold;
+    z-index: 1001;
+    transition: opacity 0.3s;
+    text-align: center;
+    max-width: 80%;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  }
+  
+  .notification-success {
+    background-color: rgba(76, 175, 80, 0.9);
+  }
+  
+  .notification-info {
+    background-color: rgba(33, 150, 243, 0.9);
+  }
+  
+  .notification-warning {
+    background-color: rgba(255, 152, 0, 0.9);
+  }
+  
+  .notification-error {
+    background-color: rgba(244, 67, 54, 0.9);
+  }
+  
+  /* Mission selection panel */
+  .mission-panel {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 300px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+    padding: 15px;
+    color: white;
+    font-family: 'Arial', sans-serif;
+    z-index: 1000;
+    border: 1px solid rgba(0, 200, 255, 0.5);
+    box-shadow: 0 0 15px rgba(0, 200, 255, 0.3);
+    display: none;
+  }
+  
+  .mission-panel.active {
+    display: block;
+  }
+  
+  .mission-panel-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #00ccff;
+    text-align: center;
+  }
+  
+  .mission-list {
+    max-height: 250px;
+    overflow-y: auto;
+    margin-bottom: 10px;
+  }
+  
+  .mission-item {
+    padding: 10px;
+    margin-bottom: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  
+  .mission-item:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  
+  .mission-item.selected {
+    background: rgba(0, 200, 255, 0.3);
+    border: 1px solid rgba(0, 200, 255, 0.7);
+  }
+  
+  .mission-item-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  
+  .mission-item-description {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+  }
+  
+  .mission-rewards {
+    font-size: 12px;
+    margin-top: 5px;
+  }
+  
+  .mission-rewards span {
+    color: #FFEB3B;
+    font-weight: bold;
+  }
+  
+  .mission-panel-buttons {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .mission-btn {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  
+  .mission-btn-start {
+    background: #00ccff;
+    color: #fff;
+  }
+  
+  .mission-btn-start:hover {
+    background: #00b8e6;
+  }
+  
+  .mission-btn-cancel {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+  }
+  
+  .mission-btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+  
+  /* Drone selection panel */
+  .drone-panel {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 300px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+    padding: 15px;
+    color: white;
+    font-family: 'Arial', sans-serif;
+    z-index: 1000;
+    border: 1px solid rgba(0, 200, 255, 0.5);
+    box-shadow: 0 0 15px rgba(0, 200, 255, 0.3);
+    display: none;
+  }
+  
+  .drone-panel.active {
+    display: block;
+  }
+  
+  .drone-panel-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #00ccff;
+    text-align: center;
+  }
+  
+  .drone-list {
+    max-height: 350px;
+    overflow-y: auto;
+    margin-bottom: 10px;
+  }
+  
+  .drone-item {
+    padding: 12px;
+    margin-bottom: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  
+  .drone-item:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  
+  .drone-item.selected {
+    background: rgba(0, 200, 255, 0.3);
+    border: 1px solid rgba(0, 200, 255, 0.7);
+  }
+  
+  .drone-item.locked {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+  
+  .drone-item-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .drone-item-title .price {
+    color: #FFEB3B;
+  }
+  
+  .drone-item-description {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 8px;
+  }
+  
+  .drone-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+    margin-top: 8px;
+  }
+  
+  .drone-stat {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .drone-stat-label {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 2px;
+  }
+  
+  .drone-stat-bar {
+    height: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  
+  .drone-stat-fill {
+    height: 100%;
+    border-radius: 3px;
+  }
+  
+  .drone-stat-fill.stability {
+    background: linear-gradient(to right, #4CAF50, #8BC34A);
+  }
+  
+  .drone-stat-fill.speed {
+    background: linear-gradient(to right, #00BCD4, #03A9F4);
+  }
+  
+  .drone-stat-fill.maneuverability {
+    background: linear-gradient(to right, #9C27B0, #673AB7);
+  }
+  
+  .drone-stat-fill.battery {
+    background: linear-gradient(to right, #FFC107, #FF9800);
+  }
+  
+  .drone-requirement {
+    font-size: 11px;
+    color: #FF5722;
+    margin-top: 5px;
+  }
+  
+  .drone-panel-buttons {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .drone-btn {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  
+  .drone-btn-select {
+    background: #00ccff;
+    color: #fff;
+  }
+  
+  .drone-btn-select:hover {
+    background: #00b8e6;
+  }
+  
+  .drone-btn-buy {
+    background: #FFEB3B;
+    color: #333;
+  }
+  
+  .drone-btn-buy:hover {
+    background: #FDD835;
+  }
+  
+  .drone-btn-buy.disabled {
+    background: #555;
+    color: #aaa;
+    cursor: not-allowed;
+  }
+  
+  .drone-btn-cancel {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+  }
+  
+  .drone-btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+  
+  /* Achieve1ments panel */
+  .achievements-panel {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    width: 300px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+    padding: 15px;
+    color: white;
+    font-family: 'Arial', sans-serif;
+    z-index: 1000;
+    border: 1px solid rgba(0, 200, 255, 0.5);
+    box-shadow: 0 0 15px rgba(0, 200, 255, 0.3);
+    display: none;
+  }
+  
+  .achievements-panel.active {
+    display: block;
+  }
+  
+  .achievements-panel-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #00ccff;
+    text-align: center;
+  }
+  
+  .achievements-list {
+    max-height: 350px;
+    overflow-y: auto;
+  }
+  
+  .achievement-item {
+    padding: 10px;
+    margin-bottom: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    transition: background 0.2s;
+  }
+  
+  .achievement-item.unlocked {
+    background: rgba(76, 175, 80, 0.3);
+    border: 1px solid rgba(76, 175, 80, 0.7);
+  }
+  
+  .achievement-item-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .achievement-item-title .reward {
+    color: #FFEB3B;
+    font-size: 12px;
+  }
+  
+  .achievement-item-description {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+  }
+  
+  .achievement-progress {
+    margin-top: 5px;
+  }
+  
+  .achievement-progress-container {
+    width: 100%;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  
+  .achievement-progress-bar {
+    height: 100%;
+    background: linear-gradient(to right, #00ccff, #00ffcc);
+    transition: width 0.3s;
+    border-radius: 3px;
+  }
+  
+  .achievement-progress-text {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.6);
+    text-align: right;
+    margin-top: 2px;
+  }
+  
+  /* Animations */
+  @keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes slideIn {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  
+  .fade-in {
+    animation: fadeIn 0.3s forwards;
+  }
+  
+  .slide-in {
+    animation: slideIn 0.3s forwards;
+  }

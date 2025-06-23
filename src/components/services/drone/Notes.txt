@@ -1,0 +1,26 @@
+x Move the thrust constants back to it making it a service under vector calculations
+# Simplify the calculateTiltAxis and calculateYawCameraOffset functions by adding the droneBody parameter directly in threescene as they are only used once.
+
+# updateMovement: line 455 to 656
+
+##
+=======================================================================================================
+Notes on passing parameters to updateMovement where current can be eliminated:
+Summary of Parameters where you can eliminate .current in updateMovement's body:
+By passing myRef.current from the caller instead of myRef:
+checkpoints -
+droneMesh -
+objectivesCompleted -
+keyState (no current used anyway)
+rpm -
+rotorRPMs   (no current used)
+delta
+rotorsOn
+------------------------------------------------------------------------------------------------------------
+Parameters where you must keep .current (assuming they are useRefs and you want to modify their persistent value):
+targetRpm
+resetCorrectionFlag
+xMovementRPMReduction (if you intend to persist changes to a ref)
+yMovementRPMReduction (if you intend to persist changes to a ref)
+zMovementRPMReduction (if you intend to persist changes to a ref)
+=================================================================================================================
